@@ -3,34 +3,41 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = 3000;
 
-app.post('/:url', async (req, res) => {
+app.get('/getImageSrc', async (req, res) => {
+    const { url } = req.query;
+
+    if (!url) {
+        return res.status(400).json({ error: 'URL parameter is required.' });
+    }
+
     try {
-        const {url} = req.params;
         const response = await axios.get(url);
-        const html = response.data;
 
-        // Use cheerio to parse the HTML
-        const $ = cheerio.load(html);
+        if (response.status === 200) {
+            const $ = cheerio.load(response.data);
+            const thirdScriptContent = $('script').eq(2).html();
 
-        // Select the third script tag and get its content
-        const thirdScriptContent = $('script').eq(2).html();
+            // Parse the JSON string into a JavaScript object
+            const jsonObject = JSON.parse(thirdScriptContent);
 
-        // Parse the JSON string into a JavaScript object
-        const jsonObject = JSON.parse(thirdScriptContent);
+            // Get the content URL from the object
+            const contentUrl = jsonObject.contentUrl;
 
-        // Get the content URL from the object
-        const contentUrl = jsonObject.contentUrl;
-
-        // Send the content URL as a JSON response
-        res.json({ contentUrl });
+            if (contentUrl) {
+                res.send(contentUrl);
+            } else {
+                res.status(404).json({ error: 'Child img tag not found within element with itemprop="image".' });
+            }
+        } else {
+            res.status(response.status).json({ error: `Failed to fetch the page. Status code: ${response.status}` });
+        }
     } catch (error) {
-        console.error('Error:', error.message);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(500).json({ error: `Error: ${error.message}` });
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
 });
