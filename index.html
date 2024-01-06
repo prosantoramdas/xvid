@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fetch and Display Video</title>
+</head>
+<body>
+    <h1>Fetch and Display Video</h1>
+    <div id="result"></div>
+    <video controls id="videoPlayer" style="display: none;"></video>
+
+    <script>
+        async function fetchAndDisplayVideo() {
+            try {
+                const targetUrl = 'https://lovesomecommunity.com/crichdlun.php?player=desktop&live=bbtsp2';
+                const response = await fetch(`http://localhost:3000/fetch-html?url=${encodeURIComponent(targetUrl)}`);
+                const htmlContent = await response.text();
+
+                // Display the result in the 'result' div
+                document.getElementById('result').innerHTML = htmlContent;
+
+                // Parse the video source directly from the HTML
+                const videoSourceMatch = htmlContent.match(/<a href="(.*?)"/);
+                const videoSource = videoSourceMatch ? videoSourceMatch[1] : null;
+
+                if (videoSource) {
+                    // Display the video player with the fetched video source
+                    const videoPlayer = document.getElementById('videoPlayer');
+                    videoPlayer.src = videoSource;
+                    videoPlayer.style.display = 'block';
+                } else {
+                    console.error('Video source not found in the HTML');
+                }
+            } catch (error) {
+                console.error('Error:', error.message);
+            }
+        }
+
+        // Fetch and display video on page load
+        fetchAndDisplayVideo();
+    </script>
+</body>
+</html>
