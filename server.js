@@ -23,10 +23,10 @@ app.get('/getImageSrc', async (req, res) => {
             const jsonObject = JSON.parse(thirdScriptContent);
 
             // Get the content URL from the object
-            const contentUrl = jsonObject.contentUrl;
+            const contentUrl = jsonObject;
 
             if (contentUrl) {
-                res.send(contentUrl);
+                res.json(contentUrl);
             } else {
                 res.status(404).json({ error: 'Child img tag not found within element with itemprop="image".' });
             }
@@ -41,3 +41,6 @@ app.get('/getImageSrc', async (req, res) => {
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
+
+
+// /getImageSrc?url=http://www.xnxx.com/video-14sbml76/horny_stepmom_alura_jenson_wants_anal_sex_before_comes_home
