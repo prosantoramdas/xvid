@@ -5,10 +5,10 @@ const cheerio = require('cheerio');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.get('/data', async (req, res) => {
+app.post('/:url', async (req, res) => {
     try {
-        const targetUrl = req.query.url;
-        const response = await axios.get(targetUrl);
+        const {url} = req.params;
+        const response = await axios.get(url);
         const html = response.data;
 
         // Use cheerio to parse the HTML
