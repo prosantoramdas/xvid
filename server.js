@@ -1,6 +1,5 @@
 const express = require('express');
-const axios = require('axios');
-const cheerio = require('cheerio');
+const puppeteer = require('puppeteer');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -12,31 +11,33 @@ app.get('/scrape', async (req, res) => {
       return res.status(400).json({ error: 'URL parameter is missing' });
     }
 
-    const response = await axios.get(urlParam);
+    // Launch a headless browser with Puppeteer
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
 
-    if (response.status === 200) {
-      const html = response.data;
-      const $ = cheerio.load(html);
+    // Navigate to the specified URL
+    await page.goto(urlParam);
 
-      // Now you can use Cheerio to select and manipulate elements
-      // For example, let's extract the content of the third script tag
-      const thirdScript = $('script').eq(2).html();
+    // Extract data from the page using Puppeteer
+    const jsonData = await page.evaluate(() => {
+      const thirdScript = document.querySelectorAll('script')[2].innerText;
+      const parsedData = JSON.parse(thirdScript);
 
-      // Parse the JSON data
-      const jsonData = JSON.parse(thirdScript);
+      return {
+        videoName: parsedData.name,
+        description: parsedData.description,
+        thumbnailUrl: parsedData.thumbnailUrl[0],
+        uploadDate: parsedData.uploadDate,
+        contentUrl: parsedData.contentUrl,
+        userInteractionCount: parsedData.interactionStatistic.userInteractionCount,
+      };
+    });
 
-      // Respond with the extracted data
-      res.json({
-        videoName: jsonData.name,
-        description: jsonData.description,
-        thumbnailUrl: jsonData.thumbnailUrl[0],
-        uploadDate: jsonData.uploadDate,
-        contentUrl: jsonData.contentUrl,
-        userInteractionCount: jsonData.interactionStatistic.userInteractionCount
-      });
-    } else {
-      res.status(response.status).json({ error: `Error: ${response.status}` });
-    }
+    // Respond with the extracted data
+    res.json(jsonData);
+
+    // Close the browser
+    await browser.close();
   } catch (error) {
     res.status(500).json({ error: 'Error fetching the page' });
   }
