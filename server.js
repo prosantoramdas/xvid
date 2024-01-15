@@ -1,21 +1,47 @@
+const express = require('express');
 const axios = require('axios');
 const cheerio = require('cheerio');
-const mainDocumentUrl = 'https://stream.crichd.vip/update/skys2.php'; // Replace with your actual URL
-async function scrapeIframeContent(iframeUrl) {
-    try {
-        // Fetch the main document HTML
-        const mainDocumentResponse = await axios.get(mainDocumentUrl);
-        const mainDocumentHtml = mainDocumentResponse.data;
-        const $ = cheerio.load(mainDocumentHtml);
-        const iframeElement = $('#myIframe'); // Replace 'myIframe' with the actual ID of your iframe
-        const iframeSrc = iframeElement.attr('src');
-        const iframeContentResponse = await axios.get(iframeSrc);
-        const iframeContentHtml = iframeContentResponse.data;
-        console.log(iframeContentHtml);
-    } catch (error) {
-        console.error('Error:', error.message);
-    }
-}
 
-// Call the function with the URL of the iframe
-scrapeIframeContent();
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.get('/scrape', async (req, res) => {
+  try {
+    const urlParam = req.query.url;
+    if (!urlParam) {
+      return res.status(400).json({ error: 'URL parameter is missing' });
+    }
+
+    const response = await axios.get(urlParam);
+
+    if (response.status === 200) {
+      const html = response.data;
+      const $ = cheerio.load(html);
+
+      // Now you can use Cheerio to select and manipulate elements
+      // For example, let's extract the content of the third script tag
+      const thirdScript = $('script').eq(2).html();
+
+      // Parse the JSON data
+      const jsonData = JSON.parse(thirdScript);
+
+      // Respond with the extracted data
+      res.json({
+        videoName: jsonData.name,
+        description: jsonData.description,
+        thumbnailUrl: jsonData.thumbnailUrl[0],
+        uploadDate: jsonData.uploadDate,
+        contentUrl: jsonData.contentUrl,
+        userInteractionCount: jsonData.interactionStatistic.userInteractionCount
+      });
+    } else {
+      res.status(response.status).json({ error: `Error: ${response.status}` });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching the page' });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
+});
