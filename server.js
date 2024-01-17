@@ -1,10 +1,12 @@
 const express = require('express');
 const axios = require('axios');
 const cheerio = require('cheerio');
+const cors = require('cors');
 
 const app = express();
 const port = 3000;
 
+app.use(cors());
 // Define an endpoint that takes a URL as a parameter
 app.get('/', async (req, res) => {
     const customUrl = req.query.url;
