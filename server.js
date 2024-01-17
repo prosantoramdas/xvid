@@ -1,51 +1,58 @@
 const express = require('express');
-const puppeteer = require('puppeteer');
+const axios = require('axios');
+const cheerio = require('cheerio');
 
 const app = express();
-const port = process.env.PORT || 3000;
-app.get('/', (req,res) =>{
-  res.send('hi')
-})
+const port = 3000;
 
-app.get('/scrape', async (req, res) => {
-  try {
-    const urlParam = req.query.url;
-    if (!urlParam) {
-      return res.status(400).json({ error: 'URL parameter is missing' });
+// Define an endpoint that takes a URL as a parameter
+app.get('/', async (req, res) => {
+    const customUrl = req.query.url;
+
+    // Check if the URL is provided
+    if (!customUrl) {
+        return res.status(400).json({ error: 'Please provide a URL in the "url" query parameter.' });
     }
 
-    // Launch a headless browser with Puppeteer
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
+    try {
+        // Fetch HTML content using Axios
+        const response = await axios.get(customUrl);
+        const html = response.data;
 
-    // Navigate to the specified URL
-    await page.goto(urlParam);
+        // Load HTML content into Cheerio
+        const $ = cheerio.load(html);
 
-    // Extract data from the page using Puppeteer
-    const jsonData = await page.evaluate(() => {
-      const thirdScript = document.querySelectorAll('script')[2].innerText;
-      const parsedData = JSON.parse(thirdScript);
+        // Extract the third script tag using Cheerio selectors
+        const thirdScriptContent = $('script').eq(2).html();
 
-      return {
-        videoName: parsedData.name,
-        description: parsedData.description,
-        thumbnailUrl: parsedData.thumbnailUrl[0],
-        uploadDate: parsedData.uploadDate,
-        contentUrl: parsedData.contentUrl,
-        userInteractionCount: parsedData.interactionStatistic.userInteractionCount,
-      };
-    });
+        // Parse the JSON content of the third script tag
+        if (thirdScriptContent) {
+            const jsonContent = JSON.parse(thirdScriptContent);
 
-    // Respond with the extracted data
-    res.json(jsonData);
+            // Check if the JSON contains a contentUrl
+            if (jsonContent && jsonContent.contentUrl) {
+                const contentUrl = jsonContent.contentUrl;
 
-    // Close the browser
-    await browser.close();
-  } catch (error) {
-    res.status(500).json({ error: 'Error fetching the page' });
-  }
+                // Create an HTML video tag with the contentUrl
+                const videoTag = `<video controls>
+                            <source src="${contentUrl}" type="video/mp4">
+                            Your browser does not support the video tag.
+                          </video>`;
+
+                // Return the HTML video tag in the response
+                res.json({ htmlVideoTag: videoTag });
+            } else {
+                res.json({ message: 'No contentUrl found in the JSON.' });
+            }
+        } else {
+            res.json({ message: 'No content found in the third script tag.' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: `Error: ${error.message}` });
+    }
 });
 
+// Start the server
 app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+    console.log(`Server is running at http://localhost:${port}`);
 });
