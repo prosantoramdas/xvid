@@ -37,7 +37,7 @@ app.get('/', async (req, res) => {
 
                 // Create an HTML video tag with the contentUrl
                 const videoTag = `<video controls>
-                            <source src="${contentUrl}" type="video/mp4" autoplay loop>
+                            <source src="${contentUrl}" type="video/mp4" autoplay loop />
                             Your browser does not support the video tag.
                           </video>`;
 
