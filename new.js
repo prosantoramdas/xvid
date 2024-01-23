@@ -1,0 +1,3 @@
+function clck() {
+    alert('hi')
+}
