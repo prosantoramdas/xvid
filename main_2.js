@@ -70,8 +70,9 @@ function DoubleYourBTC(e) {
     _.length > 0 && (l = _.toString());
     var c = $("#next_client_seed").val();
     $.get("/cgi-bin/bet.pl?m=" + e + "&client_seed=" + c + "&jackpot=" + l + "&stake=" + r + "&multiplier=" + $("#double_your_btc_payout_multiplier").val() + "&rand=" + Math.random(), (function(_) {
-        console.log(_)
+        
         var c = _.split(":");
+        console.log(c)
         if ($("#double_your_btc_error").html(""), $("#double_your_btc_error").hide(), $("#double_your_btc_stake").removeClass("input-error"), $("#double_your_btc_bet_win").html(""), $("#double_your_btc_bet_lose").html(""), $("#double_your_btc_bet_win").hide(), $("#double_your_btc_bet_lose").hide(), $("#jackpot_message").removeClass("green"), $("#jackpot_message").removeClass("red"), $("#jackpot_message").html(""), $("#jackpot_message").hide(), $("#double_your_btc_result").show(), "s1" == c[0]) {
             var d = c[2],
                 u = d.split("");
